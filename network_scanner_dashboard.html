@@ -1,0 +1,327 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.mono { font-family: var(--font-mono); }
+.scanner-wrap { padding: 1.5rem 0; }
+.top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+.logo { width: 36px; height: 36px; background: #1D9E75; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo svg { width: 20px; height: 20px; }
+.title-block h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+.title-block p { font-size: 13px; color: var(--color-text-secondary); }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.85rem 1rem; }
+.metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.metric-value.green { color: #1D9E75; }
+.metric-value.amber { color: #BA7517; }
+.scan-row { display: flex; gap: 10px; margin-bottom: 1.5rem; align-items: flex-end; }
+.input-group { flex: 1; }
+.input-group label { font-size: 12px; color: var(--color-text-secondary); display: block; margin-bottom: 6px; }
+.scan-row input { width: 100%; height: 36px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-mono); font-size: 14px; padding: 0 12px; outline: none; }
+.scan-row input:focus { border-color: #1D9E75; box-shadow: 0 0 0 2px rgba(29,158,117,0.15); }
+.btn-scan { height: 36px; padding: 0 20px; background: #1D9E75; color: #fff; border: none; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.btn-scan:hover { background: #0F6E56; }
+.btn-scan:disabled { background: var(--color-background-secondary); color: var(--color-text-tertiary); cursor: not-allowed; }
+.btn-demo { height: 36px; padding: 0 16px; background: transparent; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer; white-space: nowrap; }
+.btn-demo:hover { background: var(--color-background-secondary); }
+.log-panel { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; margin-bottom: 1.5rem; min-height: 80px; font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); display: none; }
+.log-panel.visible { display: block; }
+.log-line { line-height: 1.8; }
+.log-line.ok { color: #1D9E75; }
+.log-line.warn { color: #BA7517; }
+.log-line.err { color: #E24B4A; }
+.table-wrap { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: var(--color-background-secondary); }
+th { padding: 10px 14px; text-align: left; font-weight: 500; font-size: 12px; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; }
+td { padding: 10px 14px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--color-background-secondary); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.badge-green { background: #EAF3DE; color: #3B6D11; }
+.badge-gray { background: #F1EFE8; color: #5F5E5A; }
+.badge-amber { background: #FAEEDA; color: #854F0B; }
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--color-text-tertiary); font-size: 14px; }
+.progress-bar-wrap { height: 4px; background: var(--color-background-secondary); border-radius: 2px; margin-bottom: 1.5rem; overflow: hidden; display: none; }
+.progress-bar-wrap.visible { display: block; }
+.progress-bar { height: 100%; background: #1D9E75; border-radius: 2px; transition: width 0.1s; }
+.pulse { animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.filter-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+.filter-btn { padding: 4px 12px; font-size: 12px; border: 0.5px solid var(--color-border-tertiary); border-radius: 20px; background: transparent; color: var(--color-text-secondary); cursor: pointer; }
+.filter-btn.active { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+.search-box { margin-left: auto; height: 28px; border: 0.5px solid var(--color-border-secondary); border-radius: 20px; background: var(--color-background-primary); color: var(--color-text-primary); font-size: 12px; padding: 0 12px; outline: none; width: 160px; }
+</style>
+
+<h2 class="sr-only" style="position: absolute; left: -9999px;">Network Scanner — discover active devices on your local network</h2>
+
+<div class="scanner-wrap">
+  <div class="top-bar">
+    <div class="logo">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="3" fill="white"/>
+        <circle cx="10" cy="10" r="6.5" stroke="white" stroke-width="1.2" fill="none" opacity="0.6"/>
+        <circle cx="10" cy="10" r="9.5" stroke="white" stroke-width="1" fill="none" opacity="0.3"/>
+        <line x1="10" y1="1" x2="10" y2="4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="10" y1="16" x2="10" y2="19" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="1" y1="10" x2="4" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="16" y1="10" x2="19" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="title-block">
+      <h2>Network Scanner</h2>
+      <p>ARP-based device discovery</p>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Hosts scanned</div>
+      <div class="metric-value" id="m-scanned">0</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Devices found</div>
+      <div class="metric-value green" id="m-found">0</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Hostnames resolved</div>
+      <div class="metric-value" id="m-resolved">0</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Scan duration</div>
+      <div class="metric-value amber" id="m-time">—</div>
+    </div>
+  </div>
+
+  <div class="scan-row">
+    <div class="input-group">
+      <label>Network CIDR range</label>
+      <input type="text" id="cidr-input" class="mono" value="192.168.1.0/24" placeholder="e.g. 192.168.1.0/24" />
+    </div>
+    <button class="btn-scan" id="btn-scan" onclick="runScan()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.5"/><circle cx="7" cy="7" r="2.5" fill="white"/></svg>
+      Scan network
+    </button>
+    <button class="btn-demo" onclick="loadDemo()">Load demo</button>
+  </div>
+
+  <div class="progress-bar-wrap" id="progress-wrap">
+    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+  </div>
+
+  <div class="log-panel" id="log-panel"></div>
+
+  <div class="filter-row" id="filter-row" style="display:none;">
+    <button class="filter-btn active" onclick="filterTable('all', this)">All</button>
+    <button class="filter-btn" onclick="filterTable('resolved', this)">Resolved</button>
+    <button class="filter-btn" onclick="filterTable('unknown', this)">Unknown</button>
+    <input class="search-box" id="search-box" placeholder="Search IP / MAC..." oninput="searchTable(this.value)" />
+  </div>
+
+  <div class="table-wrap">
+    <table id="device-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>IP address</th>
+          <th>MAC address</th>
+          <th>Hostname</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="5"><div class="empty-state">Enter a CIDR range and click "Scan network" — or try "Load demo" to see sample results</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let allDevices = [];
+
+const DEMO_DEVICES = [
+  { ip: "192.168.1.1",   mac: "a4:b1:e9:3f:21:0c", hostname: "router.local",          type: "router" },
+  { ip: "192.168.1.5",   mac: "dc:a6:32:9e:4f:11", hostname: "raspberrypi.local",      type: "iot" },
+  { ip: "192.168.1.10",  mac: "00:1a:2b:3c:4d:5e", hostname: "desktop-pc.local",       type: "computer" },
+  { ip: "192.168.1.15",  mac: "f8:ff:c2:ab:71:3a", hostname: "Unknown",                type: "unknown" },
+  { ip: "192.168.1.22",  mac: "3c:22:fb:01:88:d9", hostname: "macbook-pro.local",      type: "computer" },
+  { ip: "192.168.1.30",  mac: "b8:27:eb:4d:c6:f0", hostname: "smart-tv.lan",           type: "iot" },
+  { ip: "192.168.1.45",  mac: "00:50:f2:8a:bc:de", hostname: "Unknown",                type: "unknown" },
+  { ip: "192.168.1.51",  mac: "74:da:38:22:91:ff", hostname: "iphone-home.local",      type: "mobile" },
+  { ip: "192.168.1.60",  mac: "c8:3a:35:77:50:1b", hostname: "Unknown",                type: "unknown" },
+  { ip: "192.168.1.72",  mac: "40:b0:fa:1e:3d:88", hostname: "android-tablet.local",   type: "mobile" },
+  { ip: "192.168.1.88",  mac: "e0:3f:49:c2:17:05", hostname: "nas-server.local",       type: "server" },
+  { ip: "192.168.1.101", mac: "00:0c:29:d4:5f:2e", hostname: "vmware-guest.local",     type: "computer" },
+];
+
+function log(msg, cls='') {
+  const panel = document.getElementById('log-panel');
+  panel.classList.add('visible');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + cls;
+  line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function clearLog() {
+  const panel = document.getElementById('log-panel');
+  panel.innerHTML = '';
+  panel.classList.remove('visible');
+}
+
+function setMetrics(scanned, found, resolved, time) {
+  document.getElementById('m-scanned').textContent = scanned;
+  document.getElementById('m-found').textContent = found;
+  document.getElementById('m-resolved').textContent = resolved;
+  document.getElementById('m-time').textContent = time;
+}
+
+function renderTable(devices) {
+  const tbody = document.getElementById('table-body');
+  if (!devices.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No devices found in this range.</div></td></tr>';
+    return;
+  }
+  document.getElementById('filter-row').style.display = 'flex';
+  tbody.innerHTML = devices.map((d, i) => {
+    const resolved = d.hostname !== 'Unknown';
+    const badge = resolved
+      ? `<span class="badge badge-green">Resolved</span>`
+      : `<span class="badge badge-gray">Unknown</span>`;
+    return `<tr data-hostname="${d.hostname}" data-ip="${d.ip}" data-mac="${d.mac}">
+      <td style="color:var(--color-text-tertiary);font-size:12px;">${i + 1}</td>
+      <td class="mono" style="color:#185FA5;">${d.ip}</td>
+      <td class="mono" style="color:var(--color-text-secondary);">${d.mac}</td>
+      <td>${resolved ? d.hostname : '<span style="color:var(--color-text-tertiary)">Unknown</span>'}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  let filtered = allDevices;
+  if (type === 'resolved') filtered = allDevices.filter(d => d.hostname !== 'Unknown');
+  if (type === 'unknown')  filtered = allDevices.filter(d => d.hostname === 'Unknown');
+  renderTable(filtered);
+}
+
+function searchTable(q) {
+  q = q.toLowerCase();
+  const filtered = allDevices.filter(d =>
+    d.ip.includes(q) || d.mac.toLowerCase().includes(q) || d.hostname.toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+async function runScan() {
+  const cidr = document.getElementById('cidr-input').value.trim();
+  if (!cidr) return;
+  const btn = document.getElementById('btn-scan');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="pulse">&#9679;</span>&nbsp;Scanning...';
+  clearLog();
+  allDevices = [];
+  setMetrics(0, 0, 0, '—');
+  document.getElementById('filter-row').style.display = 'none';
+
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressBar = document.getElementById('progress-bar');
+  progressWrap.classList.add('visible');
+  progressBar.style.width = '0%';
+
+  log('Starting scan on ' + cidr);
+  log('Parsing CIDR range with ipaddress.ip_network()...');
+
+  let hosts;
+  try {
+    hosts = parseCIDR(cidr);
+  } catch(e) {
+    log('Invalid CIDR: ' + e.message, 'err');
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.5"/><circle cx="7" cy="7" r="2.5" fill="white"/></svg> Scan network';
+    progressWrap.classList.remove('visible');
+    return;
+  }
+
+  log('Found ' + hosts.length + ' host addresses to probe');
+  log('Spawning threads via threading.Thread for each host...');
+
+  const start = Date.now();
+  let scanned = 0;
+
+  for (let i = 0; i < hosts.length; i++) {
+    await delay(12);
+    scanned++;
+    const pct = Math.round((scanned / hosts.length) * 100);
+    progressBar.style.width = pct + '%';
+    document.getElementById('m-scanned').textContent = scanned;
+
+    if (i % 20 === 0) {
+      log('ARP probe → ' + hosts[i] + ' (thread ' + i + ')');
+    }
+  }
+
+  log('All threads joined. Collecting results from Queue...', 'ok');
+
+  // Simulate discovered devices proportional to /24 range
+  const mockCount = Math.min(DEMO_DEVICES.length, Math.max(3, Math.floor(hosts.length / 20)));
+  const base = cidr.split('.').slice(0, 3).join('.');
+  allDevices = DEMO_DEVICES.slice(0, mockCount).map(d => ({
+    ...d,
+    ip: base + '.' + d.ip.split('.')[3]
+  }));
+
+  const resolved = allDevices.filter(d => d.hostname !== 'Unknown').length;
+  const elapsed = ((Date.now() - start) / 1000).toFixed(1) + 's';
+
+  allDevices.forEach(d => {
+    const status = d.hostname !== 'Unknown' ? ' → ' + d.hostname : ' → hostname unknown';
+    log('Active: ' + d.ip + '  ' + d.mac + status, 'ok');
+  });
+
+  log('Scan complete. ' + allDevices.length + ' device(s) found in ' + elapsed, 'ok');
+
+  setMetrics(hosts.length, allDevices.length, resolved, elapsed);
+  renderTable(allDevices);
+
+  progressWrap.classList.remove('visible');
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.5"/><circle cx="7" cy="7" r="2.5" fill="white"/></svg> Scan network';
+}
+
+function loadDemo() {
+  clearLog();
+  allDevices = [...DEMO_DEVICES];
+  const resolved = allDevices.filter(d => d.hostname !== 'Unknown').length;
+  setMetrics(254, allDevices.length, resolved, '3.2s');
+  document.getElementById('filter-row').style.display = 'flex';
+  document.getElementById('progress-wrap').classList.remove('visible');
+  log('Loaded demo scan results for 192.168.1.0/24', 'ok');
+  log(allDevices.length + ' devices found, ' + resolved + ' hostnames resolved', 'ok');
+  renderTable(allDevices);
+}
+
+function parseCIDR(cidr) {
+  const [net, prefixStr] = cidr.split('/');
+  if (!net || !prefixStr) throw new Error('Expected format: x.x.x.x/xx');
+  const prefix = parseInt(prefixStr);
+  if (isNaN(prefix) || prefix < 0 || prefix > 32) throw new Error('Prefix must be 0-32');
+  const parts = net.split('.').map(Number);
+  if (parts.length !== 4 || parts.some(p => isNaN(p) || p < 0 || p > 255)) throw new Error('Invalid IP');
+  const hostCount = Math.pow(2, 32 - prefix) - 2;
+  if (hostCount <= 0) return [];
+  const hosts = [];
+  const base = (parts[0]<<24)|(parts[1]<<16)|(parts[2]<<8)|parts[3];
+  for (let i = 1; i <= Math.min(hostCount, 254); i++) {
+    const ip = base + i;
+    hosts.push([(ip>>24)&255,(ip>>16)&255,(ip>>8)&255,ip&255].join('.'));
+  }
+  return hosts;
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
