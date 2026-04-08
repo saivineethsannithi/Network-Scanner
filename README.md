@@ -117,17 +117,20 @@ in your browser.
 
 ---
 
-## 📸 Demo
+## 📸 Demo - web-based scanner 
 
-*Add screenshots here for better presentation*
+<img width="1884" height="926" alt="Screenshot 2026-04-08 122758" src="https://github.com/user-attachments/assets/279902a7-628c-48ee-a429-640bef653d28" />
 
-Example:
+<img width="1898" height="870" alt="Screenshot 2026-04-08 122812" src="https://github.com/user-attachments/assets/fa9c4f4a-29fa-46f0-8552-10283b19b49e" />
 
-```
-screenshots/demo.png
-```
+## 📸 Demo - python code-based scanner 
 
----
+
+
+
+<img width="935" height="795" alt="Screenshot 2026-04-08 122605" src="https://github.com/user-attachments/assets/b717b4c8-eeca-42fb-a54d-eb0409de7e15" />
+
+
 
 ## 🧠 How It Works
 
